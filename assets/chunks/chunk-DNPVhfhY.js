@@ -1,0 +1,1 @@
+const t="0.4.196",i={projectName:"Vike",projectVersion:t,githubRepository:"https://github.com/vikejs/vike",githubIssues:"https://github.com/vikejs/vike/issues/new",githubDiscussions:"https://github.com/vikejs/vike/discussions",discordInvite:"https://discord.com/invite/hfHhnJyVg8",twitterProfile:"https://twitter.com/brillout"};export{i as p};
