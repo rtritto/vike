@@ -1,16 +1,19 @@
-// Keeps GitHub releases aligned with `CHANGELOG.md`.
-// => It derives release notes from `CHANGELOG.md`, creates the current release if needed, and updates inspected existing releases whose published notes are outdated (e.g. if `CHANGELOG.md` was manually edited).
+/* === WHAT IS THIS?
+Keeps GitHub releases aligned with `CHANGELOG.md`.
+=> It derives release notes from `CHANGELOG.md`, creates the current release if needed, and updates inspected existing releases whose published notes are outdated (e.g. if `CHANGELOG.md` was manually edited).
+*/
 
-// Flow:
-// 1. Resolve repository (`owner/repo`), default branch, and the current version tag (from `packages/vike/package.json`).
-// 2. Parse `packages/vike/CHANGELOG.md` into per-version sections via `getReleaseSections()`.
-// 3. If `--dry-run`, log what would happen and exit without hitting the GitHub API.
-// 4. Otherwise, fetch all existing GitHub releases (paginated) via `getAllReleases()`.
-// 5. If no releases exist yet: bootstrap by creating one release per changelog section, oldest first (so the GitHub release list ends up in the same order as the changelog).
-// 6. Otherwise, `getReleasePlan()` computes:
-//    - `releaseToCreate`: the current version, if not yet published.
-//    - `releasesToUpdate`: existing releases whose body drifted from the matching changelog section.
-//    Both are then applied via authenticated GitHub API calls (POST to create, PATCH to update), throttled to avoid abuse rate limits.
+/* === FLOW
+1. Resolve repository (`owner/repo`), default branch, and the current version tag (from `packages/vike/package.json`).
+2. Parse `packages/vike/CHANGELOG.md` into per-version sections via `getReleaseSections()`.
+3. If `--dry-run`, log what would happen and exit without hitting the GitHub API.
+4. Otherwise, fetch all existing GitHub releases (paginated) via `getAllReleases()`.
+5. If no releases exist yet: bootstrap by creating one release per changelog section, oldest first (so the GitHub release list ends up in the same order as the changelog).
+6. Otherwise, `getReleasePlan()` computes:
+   - `releaseToCreate`: the current version, if not yet published.
+   - `releasesToUpdate`: existing releases whose body drifted from the matching changelog section.
+   Both are then applied via authenticated GitHub API calls (POST to create, PATCH to update), throttled to avoid abuse rate limits.
+*/
 
 // This file is executed by sync-github-releases.yml
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
