@@ -33,8 +33,6 @@ import path from 'node:path'
 import { execSync } from 'node:child_process'
 import { setTimeout } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
-const require = createRequire(import.meta.url)
-const packageJson = require('../../../packages/vike/package.json') as { version: string }
 
 type Release = {
   id: number
@@ -55,6 +53,9 @@ type ReleaseUpdateInput = {
 }
 
 async function main(): Promise<void> {
+  const require = createRequire(import.meta.url)
+  const packageJson = require('../../../packages/vike/package.json') as { version: string }
+
   // Local testing:
   // GITHUB_TOKEN=<contents:write token> bun ./.github/workflows/sync-github-releases/sync-releases.ts
   // Dry-run (no GitHub token needed):
