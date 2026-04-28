@@ -34,7 +34,7 @@ import { execSync } from 'node:child_process'
 import { setTimeout } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
 const require = createRequire(import.meta.url)
-const { version } = require('../../../packages/vike/package.json') as { version: string }
+const packageJson = require('../../../packages/vike/package.json') as { version: string }
 
 type Release = {
   id: number
@@ -62,7 +62,7 @@ async function main(): Promise<void> {
   const dryRun = process.argv.includes('--dry-run')
   const { owner, repo } = getRepository()
   const defaultBranch = getDefaultBranch()
-  const versionTag = `v${version}`
+  const versionTag = `v${packageJson.version}`
   const changelog = await readRepositoryFile('packages/vike/CHANGELOG.md')
   const sections = getReleaseSections(changelog)
 
