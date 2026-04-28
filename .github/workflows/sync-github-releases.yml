@@ -2,8 +2,9 @@ name: Publish new Release
 
 on:
   push:
-    branches:
-      - main
+    # TODO: Restore after testing
+    # branches:
+    #   - main
     paths:
       - 'packages/vike/CHANGELOG.md'
   workflow_dispatch:
