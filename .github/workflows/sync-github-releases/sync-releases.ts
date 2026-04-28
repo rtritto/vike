@@ -1,6 +1,12 @@
 // Keeps GitHub releases aligned with `CHANGELOG.md`.
 // => It derives release notes from `CHANGELOG.md`, creates the current release if needed, and updates inspected existing releases whose published notes are outdated (e.g. if `CHANGELOG.md` was manually edited).
 
+// This file is executed by sync-github-releases.yml
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  void main()
+}
+
+// Only used by ./sync-releases.spec.ts
 export { getReleasePlan }
 export { getReleaseSections }
 export { getDefaultBranch }
@@ -258,8 +264,4 @@ async function githubRequest<T = void>(
 
   if (response.status === 204) return undefined as T
   return (await response.json()) as T
-}
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  void main()
 }
