@@ -1,6 +1,8 @@
 // Keeps GitHub releases aligned with `CHANGELOG.md`.
 // => It derives release notes from `CHANGELOG.md`, creates the current release if needed, and updates inspected existing releases whose published notes are outdated (e.g. if `CHANGELOG.md` was manually edited).
 
+// TODO/ai: write here a high-level summary of the flow of this file
+
 // This file is executed by sync-github-releases.yml
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   void main()
