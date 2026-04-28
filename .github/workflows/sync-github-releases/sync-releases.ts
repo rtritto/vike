@@ -17,7 +17,7 @@ Keeps GitHub releases aligned with `CHANGELOG.md`.
 
 // This file is executed by sync-github-releases.yml
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  void main()
+  await main()
 }
 
 // Only used by ./sync-releases.spec.ts
