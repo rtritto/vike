@@ -4,8 +4,8 @@ Keeps GitHub releases aligned with `CHANGELOG.md`.
 */
 
 /* === FLOW
-1. Resolve repository (`owner/repo`), default branch, and the current version tag (from `packages/vike/package.json`).
-2. Parse `packages/vike/CHANGELOG.md` into per-version sections via `getReleaseSections()`.
+1. Resolve repository (`owner/repo`), default branch, and the current version tag (from `<package-dir>/package.json`).
+2. Parse `<package-dir>/CHANGELOG.md` into per-version sections via `getReleaseSections()`.
 3. If `--dry-run`, log what would happen and exit without hitting the GitHub API.
 4. Otherwise, fetch all existing GitHub releases (paginated) via `getAllReleases()`.
 5. If no releases exist yet: bootstrap by creating one release per changelog section, oldest first (so the GitHub release list ends up in the same order as the changelog).
@@ -54,19 +54,31 @@ type ReleaseUpdateInput = {
 
 async function main(): Promise<void> {
   const require = createRequire(import.meta.url)
-  const packageJson = require('../../../packages/vike/package.json') as { version: string }
+
+  const args = process.argv.slice(2)
+  const packageDir = args[0]
+  if (!packageDir) {
+    console.error('Usage: sync-releases <package-dir> [--dry-run]')
+    process.exit(1)
+  }
+
+  const packageDirPath = path.resolve(process.cwd(), packageDir)
+  const packageJsonPath = path.join(packageDirPath, 'package.json')
+  const changelogPath = path.join(packageDirPath, 'CHANGELOG.md')
+
+  const packageJson = require(packageJsonPath) as { version: string }
 
   // Local testing:
-  // GITHUB_TOKEN=<contents:write token> bun ./.github/workflows/sync-github-releases/sync-releases.ts
+  // GITHUB_TOKEN=<contents:write token> bun ./.github/workflows/sync-github-releases/sync-releases.ts packages/vike
   // Dry-run (no GitHub token needed):
-  // bun ./.github/workflows/sync-github-releases/sync-releases.ts --dry-run
-  const dryRun = process.argv.includes('--dry-run')
+  // bun ./.github/workflows/sync-github-releases/sync-releases.ts packages/vike --dry-run
   const { owner, repo } = getRepository()
   const defaultBranch = getDefaultBranch()
   const versionTag = `v${packageJson.version}`
-  const changelog = await readRepositoryFile('packages/vike/CHANGELOG.md')
+  const changelog = await readFile(changelogPath, 'utf8')
   const sections = getReleaseSections(changelog)
 
+  const dryRun = args.includes('--dry-run')
   if (dryRun) {
     console.log(`Dry-run mode — no GitHub API calls will be made.`)
     console.log(`Repository: ${owner}/${repo}`)
@@ -245,14 +257,6 @@ function getDefaultBranch(): string {
   return process.env.GITHUB_DEFAULT_BRANCH ?? 'main'
 }
 
-async function readRepositoryFile(relativePath: string): Promise<string> {
-  return readFile(path.join(getRepositoryRoot(), relativePath), 'utf8')
-}
-
-function getRepositoryRoot(): string {
-  return path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
-}
-
 async function githubRequest<T = void>(
   pathname: string,
   { body, method = 'GET', token }: { body?: unknown; method?: 'GET' | 'PATCH' | 'POST'; token: string },
@@ -264,7 +268,7 @@ async function githubRequest<T = void>(
       Accept: 'application/vnd.github+json',
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
-      'User-Agent': 'vike-sync-github-releases-workflow',
+      'User-Agent': 'sync-github-releases-workflow',
       'X-GitHub-Api-Version': '2022-11-28',
     },
     body: body ? JSON.stringify(body) : undefined,
