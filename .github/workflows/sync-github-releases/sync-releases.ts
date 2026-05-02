@@ -62,8 +62,7 @@ async function main(): Promise<void> {
     process.exit(1)
   }
 
-  const packageDirPath = getRepositoryRoot(packageDir)
-
+  const packageDirPath = path.resolve(process.cwd(), packageDir)
   const packageJsonPath = path.join(packageDirPath, 'package.json')
   const changelogPath = path.join(packageDirPath, 'CHANGELOG.md')
 
@@ -256,10 +255,6 @@ function getGithubToken(): string {
 
 function getDefaultBranch(): string {
   return process.env.GITHUB_DEFAULT_BRANCH ?? 'main'
-}
-
-function getRepositoryRoot(relativePath: string): string {
-  return path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..', relativePath)
 }
 
 async function githubRequest<T = void>(
