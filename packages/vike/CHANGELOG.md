@@ -3,7 +3,7 @@
 
 ### Bug Fixes
 
-* TEST2 align dev and preview startup log ([#3210](https://github.com/vikejs/vike/issues/3210)) ([f0ea22a](https://github.com/vikejs/vike/commit/f0ea22ad8a54d662cca567ffcf60f57fd00ca9d3))
+* TEST3 align dev and preview startup log ([#3210](https://github.com/vikejs/vike/issues/3210)) ([f0ea22a](https://github.com/vikejs/vike/commit/f0ea22ad8a54d662cca567ffcf60f57fd00ca9d3))
 
 ## [0.4.258](https://github.com/vikejs/vike/compare/v0.4.257...v0.4.258) (2026-04-16)
 
