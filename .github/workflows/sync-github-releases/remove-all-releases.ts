@@ -14,6 +14,8 @@ async function removeAllReleases() {
 
   for (const release of releases) {
     console.log(`Deleting release ${release.tag_name} (ID: ${release.id}) …`)
+
+    // https://docs.github.com/en/rest/releases/releases#delete-a-release
     await githubRequest(`/repos/${owner}/${repo}/releases/${release.id}`, {
       method: 'DELETE',
       token,
