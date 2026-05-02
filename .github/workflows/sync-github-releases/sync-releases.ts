@@ -43,8 +43,7 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2)
   const packageDir = args[0]
   if (!packageDir) {
-    console.error('Usage: sync-releases <package-dir> [--dry-run]')
-    process.exit(1)
+    throw new Error('Usage: sync-releases <package-dir> [--dry-run]')
   }
 
   const packageDirPath = path.join(process.cwd(), packageDir)
