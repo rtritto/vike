@@ -47,7 +47,7 @@ async function main(): Promise<void> {
     process.exit(1)
   }
 
-  const packageDirPath = path.resolve(process.cwd(), packageDir)
+  const packageDirPath = path.join(process.cwd(), packageDir)
   const packageJsonPath = path.join(packageDirPath, 'package.json')
   const changelogPath = path.join(packageDirPath, 'CHANGELOG.md')
 
