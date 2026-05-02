@@ -78,50 +78,30 @@ async function main(): Promise<void> {
 
   const releases = await getAllReleases(owner, repo, token)
 
-  if (releases.length === 0) {
-    // Publish releases that are in CHANGELOG but not published
-    // Create release from oldest to newest, so that the release list
-    // is sorted by creation date in the same order as the changelog sections
-    const allTagReleasesToCreate = Object.keys(sections).reverse()
-    for (const tagName of allTagReleasesToCreate) {
-      await githubRequest(`/repos/${owner}/${repo}/releases`, {
-        token,
-        method: 'POST',
-        body: {
-          name: tagName,
-          tag_name: tagName,
-          target_commitish: defaultBranch,
-          body: sections[tagName],
-        },
-      })
-      console.log(`Created release ${tagName}`)
-      // Avoid hitting GitHub abuse rate limits
-      await setTimeout(500)
-    }
-  } else {
-    const { releaseToCreate, releasesToUpdate } = getReleasePlan({ defaultBranch, releases, sections, versionTag })
+  const { releasesToCreate, releasesToUpdate } = getReleasePlan({ defaultBranch, releases, sections, versionTag })
 
-    if (releaseToCreate) {
-      // https://docs.github.com/en/rest/releases/releases#create-a-release
-      await githubRequest(`/repos/${owner}/${repo}/releases`, {
-        token,
-        method: 'POST',
-        body: releaseToCreate,
-      })
-      console.log(`Created release ${versionTag}`)
-    }
+  for (const releaseToCreate of releasesToCreate) {
+    // https://docs.github.com/en/rest/releases/releases#create-a-release
+    await githubRequest(`/repos/${owner}/${repo}/releases`, {
+      token,
+      method: 'POST',
+      body: releaseToCreate,
+    })
+    console.log(`Created release ${releaseToCreate.tag_name}`)
+    // Avoid hitting GitHub abuse rate limits
+    await setTimeout(500)
+  }
 
-    for (const release of releasesToUpdate) {
-      // https://docs.github.com/en/rest/releases/releases#update-a-release
-      await githubRequest(`/repos/${owner}/${repo}/releases/${release.release_id}`, {
-        token,
-        method: 'PATCH',
-        body: { body: release.body },
-      })
-      console.log(`Updated release ${release.tag_name}`)
-      // Avoid hitting GitHub abuse rate limits
-      await setTimeout(500)
-    }
+  for (const releaseToUpdate of releasesToUpdate) {
+    // https://docs.github.com/en/rest/releases/releases#update-a-release
+    await githubRequest(`/repos/${owner}/${repo}/releases/${releaseToUpdate.release_id}`, {
+      token,
+      method: 'PATCH',
+      body: { body: releaseToUpdate.body },
+    })
+    console.log(`Updated release ${releaseToUpdate.tag_name}`)
+    // Avoid hitting GitHub abuse rate limits
+    await setTimeout(500)
   }
 }
 
@@ -157,20 +137,21 @@ function getReleasePlan({
   sections: ReleaseSections
   versionTag: string
 }): {
-  releaseToCreate: ReleaseCreateInput | null
+  releasesToCreate: ReleaseCreateInput[]
   releasesToUpdate: ReleaseUpdateInput[]
 } {
   const currentBody = sections[versionTag]
   assert(currentBody, `Missing changelog entry for ${versionTag}`)
 
-  const releaseToCreate = releases.some((release) => release.tag_name === versionTag)
-    ? null
-    : {
-        tag_name: versionTag,
-        target_commitish: defaultBranch,
-        name: versionTag,
-        body: currentBody,
-      }
+  const releasesToCreate: ReleaseCreateInput[] = Object.keys(sections)
+    .filter((tagName) => !releases.some((release) => release.tag_name === tagName))
+    .reverse()
+    .map((tagName) => ({
+      tag_name: tagName,
+      target_commitish: defaultBranch,
+      name: tagName,
+      body: sections[tagName],
+    }))
 
   const releasesToUpdate = releases.flatMap((release) => {
     const body = sections[release.tag_name]
@@ -178,5 +159,5 @@ function getReleasePlan({
     return [{ release_id: release.id, tag_name: release.tag_name, body }]
   })
 
-  return { releaseToCreate, releasesToUpdate }
+  return { releasesToCreate, releasesToUpdate }
 }

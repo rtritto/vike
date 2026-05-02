@@ -73,7 +73,7 @@ describe('getReleaseSections()', () => {
 })
 
 describe('getReleasePlan()', () => {
-  it('creates the current release when missing and updates stale notes', () => {
+  it('creates missing past releases alongside the current release and updates stale notes', () => {
     const plan = getReleasePlan({
       defaultBranch: 'main',
       versionTag: 'v1.0.1',
@@ -81,6 +81,7 @@ describe('getReleasePlan()', () => {
         'v1.0.1': 'New release notes',
         'v1.0.0': 'Updated old notes',
         'v0.9.0': 'Existing notes',
+        'v0.8.0': 'Missing past notes',
       },
       releases: [
         { id: 1, tag_name: 'v1.0.0', body: 'Outdated old notes' },
@@ -89,12 +90,20 @@ describe('getReleasePlan()', () => {
     })
 
     expect(plan).toEqual({
-      releaseToCreate: {
-        tag_name: 'v1.0.1',
-        target_commitish: 'main',
-        name: 'v1.0.1',
-        body: 'New release notes',
-      },
+      releasesToCreate: [
+        {
+          tag_name: 'v0.8.0',
+          target_commitish: 'main',
+          name: 'v0.8.0',
+          body: 'Missing past notes',
+        },
+        {
+          tag_name: 'v1.0.1',
+          target_commitish: 'main',
+          name: 'v1.0.1',
+          body: 'New release notes',
+        },
+      ],
       releasesToUpdate: [{ release_id: 1, tag_name: 'v1.0.0', body: 'Updated old notes' }],
     })
   })
@@ -110,7 +119,7 @@ describe('getReleasePlan()', () => {
     })
 
     expect(plan).toEqual({
-      releaseToCreate: null,
+      releasesToCreate: [],
       releasesToUpdate: [{ release_id: 3, tag_name: 'v1.0.1', body: 'Fresh release notes' }],
     })
   })
