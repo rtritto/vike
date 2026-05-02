@@ -17,40 +17,25 @@ Keeps GitHub releases aligned with `CHANGELOG.md`.
 
 // This file is executed by sync-github-releases.yml
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  await main()
+  await main().catch((err) => {
+    console.error(err)
+    process.exit(1)
+  })
 }
 
 // Only used by ./sync-releases.spec.ts
 export { getReleasePlan }
 export { getReleaseSections }
-export { getDefaultBranch }
-export { getRepository }
 
 import assert from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
-import { execSync } from 'node:child_process'
 import { setTimeout } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
 
-type Release = {
-  id: number
-  tag_name: string
-  body: string | null
-}
-type ReleaseSections = Record<string, string>
-type ReleaseCreateInput = {
-  tag_name: string
-  target_commitish: string
-  name: string
-  body: string
-}
-type ReleaseUpdateInput = {
-  release_id: number
-  tag_name: string
-  body: string
-}
+import type { Release, ReleaseCreateInput, ReleaseSections, ReleaseUpdateInput } from './types'
+import { getAllReleases, getDefaultBranch, getGithubToken, getRepository, githubRequest } from './github-utils'
 
 async function main(): Promise<void> {
   const require = createRequire(import.meta.url)
@@ -140,32 +125,6 @@ async function main(): Promise<void> {
   }
 }
 
-async function getAllReleases(owner: string, repo: string, token: string): Promise<Release[]> {
-  const allReleases: Release[] = []
-  let page = 1
-  const perPage = 100
-
-  while (true) {
-    // https://docs.github.com/en/rest/releases/releases#list-releases
-    const releases = await githubRequest<Release[]>(
-      `/repos/${owner}/${repo}/releases?per_page=${perPage}&page=${page}`,
-      { token },
-    )
-
-    if (releases.length === 0) break
-
-    allReleases.push(...releases)
-
-    if (releases.length < perPage) break
-
-    page++
-
-    await setTimeout(500)
-  }
-
-  return allReleases
-}
-
 function getReleaseSections(changelog: string): ReleaseSections {
   const sections: ReleaseSections = {}
   // Matches changelog headings: `## [0.4.257](...)` or `# [0.1.0-beta.6](...)`
@@ -220,67 +179,4 @@ function getReleasePlan({
   })
 
   return { releaseToCreate, releasesToUpdate }
-}
-
-function getRepository(): { owner: string; repo: string } {
-  const repository = process.env.GITHUB_REPOSITORY ?? getRepositoryFromGit()
-  const [owner, repo] = repository.split('/')
-  assert(owner && repo, `Invalid GITHUB_REPOSITORY value: ${repository}`)
-  return { owner, repo }
-}
-
-function getRepositoryFromGit(): string {
-  const url = execSync('git remote get-url origin', { encoding: 'utf8' }).trim()
-  // Handles both https://github.com/owner/repo.git and git@github.com:owner/repo.git
-  const match = url.match(/github\.com[:/](.+?)(?:\.git)?$/)
-  assert(match, `Cannot parse GitHub repository from git remote: ${url}`)
-  return match[1]
-}
-
-function getGithubToken(): string {
-  const token = process.env.GITHUB_TOKEN
-  if (!token) {
-    console.error(
-      [
-        'GITHUB_TOKEN is not set, run:',
-        '  GITHUB_TOKEN=<token> pnpm run run',
-        'Or dry-run (no token needed):',
-        '  pnpm run try',
-      ].join('\n'),
-    )
-    process.exit(1)
-  }
-  return token
-}
-
-function getDefaultBranch(): string {
-  return process.env.GITHUB_DEFAULT_BRANCH ?? 'main'
-}
-
-async function githubRequest<T = void>(
-  pathname: string,
-  { body, method = 'GET', token }: { body?: unknown; method?: 'GET' | 'PATCH' | 'POST'; token: string },
-): Promise<T> {
-  const apiUrl = process.env.GITHUB_API_URL ?? 'https://api.github.com'
-  const response = await fetch(new URL(pathname, apiUrl), {
-    method,
-    headers: {
-      Accept: 'application/vnd.github+json',
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'User-Agent': 'sync-github-releases-workflow',
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  })
-
-  if (!response.ok) {
-    const errorBody = await response.text()
-    throw new Error(
-      `GitHub API request failed (${method} ${pathname}): ${response.status} ${response.statusText}\n${errorBody}`,
-    )
-  }
-
-  if (response.status === 204) return undefined as T
-  return (await response.json()) as T
 }

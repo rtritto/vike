@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { getDefaultBranch, getReleasePlan, getReleaseSections, getRepository } from './sync-releases'
+import { getDefaultBranch, getRepository } from './github-utils'
+import { getReleasePlan, getReleaseSections } from './sync-releases'
 
 function readFixture(name: string): string {
   return readFileSync(path.join(__dirname, 'fixtures', name), 'utf8')
