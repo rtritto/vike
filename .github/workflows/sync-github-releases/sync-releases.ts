@@ -33,7 +33,6 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 import { setTimeout } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
-
 import type { Release, ReleaseCreateInput, ReleaseSections, ReleaseUpdateInput } from './types'
 import { getAllReleases, getDefaultBranch, getGithubToken, getRepository, githubRequest } from './github-utils'
 
