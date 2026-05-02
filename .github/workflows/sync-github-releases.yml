@@ -31,6 +31,7 @@ jobs:
         run: |
           for file in $(git diff-tree --no-commit-id --name-only -r ${{ github.sha }} | grep CHANGELOG.md); do
             package_dir=$(dirname $file)
+            echo "Syncing GitHub releases for package directory: $package_dir"
             bun ./.github/workflows/sync-github-releases/sync-releases.ts $package_dir
           done
         env:
