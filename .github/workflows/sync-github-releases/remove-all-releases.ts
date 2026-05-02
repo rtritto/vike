@@ -1,5 +1,13 @@
-export { removeAllReleases }
+// Example usage:
+// GITHUB_TOKEN=<contents:write token> bun ./.github/workflows/sync-github-releases/remove-all-releases.ts
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  await removeAllReleases().catch((err) => {
+    console.error(err)
+    process.exit(1)
+  })
+}
 
+import { fileURLToPath } from 'node:url'
 import { getAllReleases, getGithubToken, getRepository, githubRequest } from './github-utils'
 
 async function removeAllReleases() {
